@@ -482,6 +482,7 @@ static bool show_s0 = false;
 
 
 static bool MenDeal = true;
+static bool sShouldCaptureTouches = false;
 
 
 - (instancetype)initWithNibName:(nullable NSString *)nibNameOrNil bundle:(nullable NSBundle *)nibBundleOrNil
@@ -557,6 +558,12 @@ static bool MenDeal = true;
 
 #pragma mark - Interaction
 
+- (BOOL)isImGuiCapturingTouch
+{
+    ImGuiIO &io = ImGui::GetIO();
+    return sShouldCaptureTouches || io.WantCaptureMouse;
+}
+
 - (void)updateIOWithTouchEvent:(UIEvent *)event
 {
     UITouch *anyTouch = event.allTouches.anyObject;
@@ -578,22 +585,38 @@ static bool MenDeal = true;
 
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
 {
-    [self updateIOWithTouchEvent:event];
+    if ([self isImGuiCapturingTouch]) {
+        [self updateIOWithTouchEvent:event];
+        return;
+    }
+    [super touchesBegan:touches withEvent:event];
 }
 
 - (void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
 {
-    [self updateIOWithTouchEvent:event];
+    if ([self isImGuiCapturingTouch]) {
+        [self updateIOWithTouchEvent:event];
+        return;
+    }
+    [super touchesMoved:touches withEvent:event];
 }
 
 - (void)touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
 {
-    [self updateIOWithTouchEvent:event];
+    if ([self isImGuiCapturingTouch]) {
+        [self updateIOWithTouchEvent:event];
+        return;
+    }
+    [super touchesCancelled:touches withEvent:event];
 }
 
 - (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
 {
-    [self updateIOWithTouchEvent:event];
+    if ([self isImGuiCapturingTouch]) {
+        [self updateIOWithTouchEvent:event];
+        return;
+    }
+    [super touchesEnded:touches withEvent:event];
 }
 
 #pragma mark - Initialization Overlay
@@ -795,6 +818,8 @@ static bool MenDeal = true;
                 ImGui::End();
                 
             }
+            sShouldCaptureTouches = MenDeal && !ImGui::IsWindowCollapsed();
+
             ImDrawList* draw_list = ImGui::GetBackgroundDrawList();
 
             if (esp_enabled) {
