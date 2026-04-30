@@ -760,19 +760,22 @@ static CGRect sImGuiTouchRect = CGRectZero;
                 
                 ImVec2 windowPos = ImGui::GetWindowPos();
                 ImVec2 windowSize = ImGui::GetWindowSize();
-                float maxX = (float)screenWidth - windowSize.x;
-                float maxY = (float)screenHeight - windowSize.y;
-                float clampedX = std::max(0.0f, std::min((float)windowPos.x, maxX));
-                float clampedY = std::max(0.0f, std::min((float)windowPos.y, maxY));
-                if (clampedX != windowPos.x || clampedY != windowPos.y) {
+                const float titleBarHeight = ImGui::GetFrameHeightWithSpacing() + 8.0f;
+                float minX = 0.0f;
+                float minY = 0.0f;
+                float maxX = std::max(0.0f, (float)screenWidth - windowSize.x);
+                float maxY = std::max(0.0f, (float)screenHeight - titleBarHeight);
+                float clampedX = std::max(minX, std::min((float)windowPos.x, maxX));
+                float clampedY = std::max(minY, std::min((float)windowPos.y, maxY));
+                if (!ImGui::IsMouseDown(0) && (clampedX != windowPos.x || clampedY != windowPos.y)) {
                     ImGui::SetWindowPos(ImVec2(clampedX, clampedY), ImGuiCond_Always);
                 }
                 
                 sShouldCaptureTouches = true;
                 sImGuiTouchRect = CGRectMake(ImGui::GetWindowPos().x,
                                              ImGui::GetWindowPos().y,
-                                             ImGui::GetWindowSize().x,
-                                             ImGui::GetWindowSize().y);
+                                             std::max(ImGui::GetWindowSize().x, 180.0f),
+                                             std::max(ImGui::GetWindowSize().y, titleBarHeight));
 
                 ImGui::TextWrapped("IL2CPP ESP Auto Update Unity3D Games");
                 ImGui::TextWrapped("No Jailbreak Required - No JIT Required");
