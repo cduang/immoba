@@ -760,8 +760,10 @@ static CGRect sImGuiTouchRect = CGRectZero;
                 
                 ImVec2 windowPos = ImGui::GetWindowPos();
                 ImVec2 windowSize = ImGui::GetWindowSize();
-                float clampedX = std::max(0.0f, std::min(windowPos.x, screenWidth - windowSize.x));
-                float clampedY = std::max(0.0f, std::min(windowPos.y, screenHeight - windowSize.y));
+                float maxX = (float)screenWidth - windowSize.x;
+                float maxY = (float)screenHeight - windowSize.y;
+                float clampedX = std::max(0.0f, std::min((float)windowPos.x, maxX));
+                float clampedY = std::max(0.0f, std::min((float)windowPos.y, maxY));
                 if (clampedX != windowPos.x || clampedY != windowPos.y) {
                     ImGui::SetWindowPos(ImVec2(clampedX, clampedY), ImGuiCond_Always);
                 }
