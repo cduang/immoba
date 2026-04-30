@@ -743,31 +743,37 @@ static CGRect sImGuiTouchRect = CGRectZero;
                 font->Scale = 15.f / font->FontSize;
             }
             
-            CGFloat x = (([UIScreen mainScreen].bounds.size.width) - 360) / 2;
-            CGFloat y = (([UIScreen mainScreen].bounds.size.height) - 300) / 2;
+            CGFloat screenWidth = [UIScreen mainScreen].bounds.size.width;
+            CGFloat screenHeight = [UIScreen mainScreen].bounds.size.height;
+            CGFloat defaultWidth = MIN(320.0f, screenWidth * 0.82f);
+            CGFloat defaultHeight = MIN(240.0f, screenHeight * 0.72f);
+            CGFloat x = (screenWidth - defaultWidth) * 0.5f;
+            CGFloat y = (screenHeight - defaultHeight) * 0.5f;
             
             ImGui::SetNextWindowPos(ImVec2(x, y), ImGuiCond_FirstUseEver);
-            ImGui::SetNextWindowSize(ImVec2(400, 300), ImGuiCond_FirstUseEver);
+            ImGui::SetNextWindowSize(ImVec2(defaultWidth, defaultHeight), ImGuiCond_FirstUseEver);
+            ImGui::SetNextWindowSizeConstraints(ImVec2(260, 200), ImVec2(screenWidth - 12.0f, screenHeight - 12.0f));
             
             if (MenDeal == true && [IL2CPPInit isInitializationComplete])
             {                
-                ImGui::Begin("IL2CPP ESP Auto Update Unity3D Games", &MenDeal);
+                ImGui::Begin("IL2CPP ESP Auto Update Unity3D Games", &MenDeal, ImGuiWindowFlags_NoSavedSettings);
+                
+                ImVec2 windowPos = ImGui::GetWindowPos();
+                ImVec2 windowSize = ImGui::GetWindowSize();
+                float clampedX = std::max(0.0f, std::min(windowPos.x, screenWidth - windowSize.x));
+                float clampedY = std::max(0.0f, std::min(windowPos.y, screenHeight - windowSize.y));
+                if (clampedX != windowPos.x || clampedY != windowPos.y) {
+                    ImGui::SetWindowPos(ImVec2(clampedX, clampedY), ImGuiCond_Always);
+                }
                 
                 sShouldCaptureTouches = true;
-                if (ImGui::IsWindowCollapsed()) {
-                    sImGuiTouchRect = CGRectMake(ImGui::GetWindowPos().x,
-                                                 ImGui::GetWindowPos().y,
-                                                 ImGui::GetWindowSize().x,
-                                                 ImGui::GetWindowSize().y);
-                } else {
-                    sImGuiTouchRect = CGRectMake(ImGui::GetWindowPos().x,
-                                                 ImGui::GetWindowPos().y,
-                                                 ImGui::GetWindowSize().x,
-                                                 ImGui::GetWindowSize().y);
-                }
+                sImGuiTouchRect = CGRectMake(ImGui::GetWindowPos().x,
+                                             ImGui::GetWindowPos().y,
+                                             ImGui::GetWindowSize().x,
+                                             ImGui::GetWindowSize().y);
 
-                ImGui::Text("IL2CPP ESP Auto Update Unity3D Games");
-                ImGui::Text("No Jailbreak Required - No JIT Required");
+                ImGui::TextWrapped("IL2CPP ESP Auto Update Unity3D Games");
+                ImGui::TextWrapped("No Jailbreak Required - No JIT Required");
                 
                 if (ImGui::BeginTabBar("MainTabBar"))
                 {
@@ -837,9 +843,9 @@ static CGRect sImGuiTouchRect = CGRectZero;
                         ImGui::Separator();
                         
                         ImGui::TextColored(ImVec4(0.0f, 0.7f, 1.0f, 1.0f), "Credits:");
-                        ImGui::Text("Main Developer: AlexZero");
-                        ImGui::Text("ImGui Template: Little 34306");
-                        ImGui::Text("IL2CPP Framework: Hao Dam (damduchao)");
+                        ImGui::TextWrapped("Main Developer: AlexZero");
+                        ImGui::TextWrapped("ImGui Template: Little 34306");
+                        ImGui::TextWrapped("IL2CPP Framework: Hao Dam (damduchao)");
                         ImGui::EndTabItem();
                     }
                     
