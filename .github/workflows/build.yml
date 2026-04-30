@@ -45,11 +45,13 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install Theos
+      - name: Install Theos and ldid
         run: |
           git clone --recursive https://github.com/theos/theos.git "$THEOS"
           echo "THEOS=$THEOS" >> "$GITHUB_ENV"
           echo "THEOS_MAKE_PATH=$THEOS/makefiles" >> "$GITHUB_ENV"
+          brew update
+          brew install ldid
 
       - name: Build package
         run: |
