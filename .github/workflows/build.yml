@@ -1,0 +1,84 @@
+name: Build Theos Package
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - '**/*.m'
+      - '**/*.mm'
+      - '**/*.cpp'
+      - '**/*.h'
+      - '**/*.hpp'
+      - 'Makefile'
+      - 'control'
+      - 'IL2CPPMenu.plist'
+      - '.github/workflows/**'
+  pull_request:
+    paths:
+      - '**/*.m'
+      - '**/*.mm'
+      - '**/*.cpp'
+      - '**/*.h'
+      - '**/*.hpp'
+      - 'Makefile'
+      - 'control'
+      - 'IL2CPPMenu.plist'
+      - '.github/workflows/**'
+
+jobs:
+  build:
+    runs-on: macos-latest
+    env:
+      THEOS: ${{ github.workspace }}/theos
+      THEOS_MAKE_PATH: ${{ github.workspace }}/theos/makefiles
+      FINALPACKAGE: '1'
+      ARCHS: arm64
+      ROOTLESS: '1'
+      DEBUG: '0'
+      IGNORE_WARNINGS: '1'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Theos
+        run: |
+          git clone --recursive https://github.com/theos/theos.git "$THEOS"
+          echo "THEOS=$THEOS" >> "$GITHUB_ENV"
+          echo "THEOS_MAKE_PATH=$THEOS/makefiles" >> "$GITHUB_ENV"
+
+      - name: Build package
+        run: |
+          make clean package
+
+      - name: Prepare artifacts
+        run: |
+          mkdir -p artifacts/dylib artifacts/package
+          cp -f .theos/obj/debug/*.deb artifacts/package/ || true
+          cp -f .theos/obj/release/*.deb artifacts/package/ || true
+          if [ -f .theos/obj/debug/IL2CPPMenu.dylib ]; then
+            cp -f .theos/obj/debug/IL2CPPMenu.dylib artifacts/dylib/
+          fi
+          if [ -f .theos/obj/release/IL2CPPMenu.dylib ]; then
+            cp -f .theos/obj/release/IL2CPPMenu.dylib artifacts/dylib/
+          fi
+          find .theos -name '*.deb' -exec cp -f {} artifacts/package/ \;
+          find .theos -name '*.dylib' -exec cp -f {} artifacts/dylib/ \;
+
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: theos-package
+          path: artifacts/package/*
+          if-no-files-found: warn
+
+      - name: Upload dylib artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: injected-dylib
+          path: artifacts/dylib/*
+          if-no-files-found: warn
