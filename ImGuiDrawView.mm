@@ -483,6 +483,7 @@ static bool show_s0 = false;
 
 static bool MenDeal = true;
 static bool sShouldCaptureTouches = false;
+static CGRect sImGuiTouchRect = CGRectZero;
 
 
 - (instancetype)initWithNibName:(nullable NSString *)nibNameOrNil bundle:(nullable NSBundle *)nibBundleOrNil
@@ -560,8 +561,12 @@ static bool sShouldCaptureTouches = false;
 
 - (BOOL)isImGuiCapturingTouch
 {
+    if (sShouldCaptureTouches) {
+        return YES;
+    }
+
     ImGuiIO &io = ImGui::GetIO();
-    return sShouldCaptureTouches || io.WantCaptureMouse;
+    return io.WantCaptureMouse;
 }
 
 - (void)updateIOWithTouchEvent:(UIEvent *)event
@@ -583,9 +588,16 @@ static bool sShouldCaptureTouches = false;
     io.MouseDown[0] = hasActiveTouch;
 }
 
+- (BOOL)pointInsideImGuiWindow:(CGPoint)point
+{
+    return CGRectContainsPoint(sImGuiTouchRect, point);
+}
+
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
 {
-    if ([self isImGuiCapturingTouch]) {
+    UITouch *touch = touches.anyObject;
+    CGPoint point = [touch locationInView:self.view];
+    if ([self isImGuiCapturingTouch] && [self pointInsideImGuiWindow:point]) {
         [self updateIOWithTouchEvent:event];
         return;
     }
@@ -594,7 +606,9 @@ static bool sShouldCaptureTouches = false;
 
 - (void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
 {
-    if ([self isImGuiCapturingTouch]) {
+    UITouch *touch = touches.anyObject;
+    CGPoint point = [touch locationInView:self.view];
+    if ([self isImGuiCapturingTouch] && [self pointInsideImGuiWindow:point]) {
         [self updateIOWithTouchEvent:event];
         return;
     }
@@ -603,7 +617,9 @@ static bool sShouldCaptureTouches = false;
 
 - (void)touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
 {
-    if ([self isImGuiCapturingTouch]) {
+    UITouch *touch = touches.anyObject;
+    CGPoint point = [touch locationInView:self.view];
+    if ([self isImGuiCapturingTouch] && [self pointInsideImGuiWindow:point]) {
         [self updateIOWithTouchEvent:event];
         return;
     }
@@ -612,7 +628,9 @@ static bool sShouldCaptureTouches = false;
 
 - (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
 {
-    if ([self isImGuiCapturingTouch]) {
+    UITouch *touch = touches.anyObject;
+    CGPoint point = [touch locationInView:self.view];
+    if ([self isImGuiCapturingTouch] && [self pointInsideImGuiWindow:point]) {
         [self updateIOWithTouchEvent:event];
         return;
     }
@@ -734,6 +752,20 @@ static bool sShouldCaptureTouches = false;
             if (MenDeal == true && [IL2CPPInit isInitializationComplete])
             {                
                 ImGui::Begin("IL2CPP ESP Auto Update Unity3D Games", &MenDeal);
+                
+                sShouldCaptureTouches = true;
+                if (ImGui::IsWindowCollapsed()) {
+                    sImGuiTouchRect = CGRectMake(ImGui::GetWindowPos().x,
+                                                 ImGui::GetWindowPos().y,
+                                                 ImGui::GetWindowSize().x,
+                                                 ImGui::GetWindowSize().y);
+                } else {
+                    sImGuiTouchRect = CGRectMake(ImGui::GetWindowPos().x,
+                                                 ImGui::GetWindowPos().y,
+                                                 ImGui::GetWindowSize().x,
+                                                 ImGui::GetWindowSize().y);
+                }
+
                 ImGui::Text("IL2CPP ESP Auto Update Unity3D Games");
                 ImGui::Text("No Jailbreak Required - No JIT Required");
                 
@@ -817,8 +849,10 @@ static bool sShouldCaptureTouches = false;
 
                 ImGui::End();
                 
+            } else {
+                sShouldCaptureTouches = false;
+                sImGuiTouchRect = CGRectZero;
             }
-            sShouldCaptureTouches = MenDeal && !ImGui::IsWindowCollapsed();
 
             ImDrawList* draw_list = ImGui::GetBackgroundDrawList();
 
